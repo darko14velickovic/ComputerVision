@@ -370,6 +370,8 @@ def main(images):
 
     mexhatsmall = np.array([[0, 0, -1, 0, 0], [0, -1, -2, -1, 0], [-1, -2, 16, -2, -1], [0, -1, -2, -1, 0], [0, 0, -1, 0, 0]])
 
+    averages = np.zeros(images.__len__())
+    counter = 0
     for image in images:
         originalImg = cv2.imread(image, 0)
         width, height = originalImg.shape
@@ -381,29 +383,59 @@ def main(images):
 
         img, sobelv, sobelh, maxval = sobel_filter(img, 3)
 
-        dirMap, img = thresholdandfinddirectionmap(img, width, height, sobelh, sobelv, maxval, 200)
+        #dirMap, img = thresholdandfinddirectionmap(img, width, height, sobelh, sobelv, maxval, 200)
 
         #img = edgeEnhance(originalImg, img, width, height, mexhatsmall)
 
-        abspace = accumulateinab(img, width, height, dirMap, 5, 15)
+        #abspace = accumulateinab(img, width, height, dirMap, 5, 15)
 
-        absspace = enhanceabspace(abspace, width, height, 50)
+        #absspace = enhanceabspace(abspace, width, height, 50)
 
         cv2.imwrite("sobel_"+image, img)
         img = cv2.imread("sobel_"+image, 0)
 
-        #circles = cv2.HoughCircles(img, cv2.cv.CV_HOUGH_GRADIENT, 1, 10,
-        #                           param1=10, param2=30, minRadius=10, maxRadius=19)
-        #for i in circles[0, :]:
-        #    cv2.circle(cimg, (i[0], i[1]), i[2], (0, 255, 0), 2)
-        #    cv2.circle(cimg, (i[0], i[1]), 2, (0, 0, 255), 3)
+        circles = cv2.HoughCircles(img, cv2.cv.CV_HOUGH_GRADIENT, 1, 10,
+                                   param1=10, param2=30, minRadius=10, maxRadius=20)
+        gridSize = 3 #from center 3 pixels in every direction
 
-        #cv2.imwrite("processed_"+image, cimg)
+        for i in circles[0, :]:
+            centrY = int(i[0])
+            centrX = int(i[1])
+            suma = 0
+
+            suma += originalImg[centrX][centrY]
+            for j in range(1, gridSize+1):
+                suma += originalImg[centrX + j][centrY]
+                suma += originalImg[centrX + j][centrY + j]
+                suma += originalImg[centrX][centrY + j]
+                suma += originalImg[centrX - j][centrY]
+                suma += originalImg[centrX - j][centrY - j]
+                suma += originalImg[centrX][centrY - 1]
+                suma += originalImg[centrX + j][centrY - j]
+                suma += originalImg[centrX - j][centrY + j]
+
+            normalizeValue = gridSize * 2 + 1
+            normalizeValue *= normalizeValue
+            suma = suma / normalizeValue
+
+            #averages[counter] = suma
+            #counter = counter + 1
+
+            if(suma <= 50):
+                cv2.circle(cimg, (i[0], i[1]), i[2], (0, 255, 0), 2)
+            else:
+                cv2.circle(cimg, (i[0], i[1]), i[2], (0, 0, 255), 2)
+            #cv2.circle(cimg, (i[0], i[1]), 2, (0, 0, 255), 3)
+
+
+        cv2.imwrite("processed_"+image, cimg)
         print("Processed image: "+image)
-
+    print averages
     cv2.waitKey(0)
     cv2.destroyAllWindows()
-
-main(['gajba1.jpg', 'gajba2.jpg', 'gajba3.jpg', 'gajba4.jpg', 'gajba5.jpg', 'gajba6.jpg', 'gajba7.jpg', 'gajba8.jpg',
-     'gajba9.jpg', 'gajba10.jpg', 'gajba11.jpg', 'gajba12.jpg', 'gajba13.jpg', 'gajba14.jpg', 'gajba15.jpg', 'gajba16.jpg', 'gajba17.jpg'])
+#3 7 8 11 12 15
+#main(['gajba1.jpg', 'gajba2.jpg', 'gajba3.jpg', 'gajba4.jpg', 'gajba5.jpg', 'gajba6.jpg', 'gajba7.jpg', 'gajba8.jpg',
+#     'gajba9.jpg', 'gajba10.jpg', 'gajba11.jpg', 'gajba12.jpg', 'gajba13.jpg', 'gajba14.jpg', 'gajba15.jpg', 'gajba16.jpg', 'gajba17.jpg'])
 #main2()
+
+main(['gajba3.jpg', 'gajba7.jpg', 'gajba8.jpg', 'gajba11.jpg', 'gajba12.jpg', 'gajba15.jpg'])
