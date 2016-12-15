@@ -1,11 +1,18 @@
 import numpy as np
-# from random import randint
+from random import randint
 import cv2
 import math
-
+import neuralnetwork as neural
+import time
 # import time
 # from PIL import Image
 
+import sys
+
+from PySide.QtGui import QMainWindow, QPushButton, QApplication
+from PySide import QtCore, QtGui
+
+from ui_window import Ui_MainWindow
 
 from math import hypot, pi, cos, sin
 # from PIL import Image
@@ -102,7 +109,7 @@ def sobel_filter(im, k_size):
     maxval = np.max(g)
     #g *= 255.0 / np.max(g)
 
-
+    #g = g.astype(np.int8)
 
     return g, gy, gx, maxval
 
@@ -341,10 +348,6 @@ def accumulateinrspace(abspace, edgemap, dirmap, width, height, image, maxradius
 
 
 
-
-
-
-
 def testing():
     red = np.ones((7, 7))
     red = red / 2
@@ -353,7 +356,7 @@ def testing():
 
 def main2():
 
-    img = cv2.imread("second_derr.png",0)
+    img = cv2.imread("second_derr.png", 0)
 
     cimg = cv2.imread("second_derr.png")
 
@@ -374,9 +377,21 @@ def main(images):
     counter = 0
     for image in images:
         originalImg = cv2.imread(image, 0)
+
         width, height = originalImg.shape
+
+        for i in range(0, width):
+            for j in range(0, height):
+                if(originalImg[i][j] >= 92):
+                    originalImg[i][j] = 255
+                else:
+                    originalImg[i][j] = 0
+        cv2.imwrite("binary_"+image, originalImg)
+
         cimg = cv2.cvtColor(originalImg, cv2.COLOR_GRAY2BGR)
         img = smoothing_filter(originalImg, 4)
+
+        cv2.imwrite("smooth_"+image,img)
 
         sobelv = np.ones((width, height))
         sobelh = np.ones((width, height))
@@ -433,9 +448,360 @@ def main(images):
     print averages
     cv2.waitKey(0)
     cv2.destroyAllWindows()
+
 #3 7 8 11 12 15
 #main(['gajba1.jpg', 'gajba2.jpg', 'gajba3.jpg', 'gajba4.jpg', 'gajba5.jpg', 'gajba6.jpg', 'gajba7.jpg', 'gajba8.jpg',
 #     'gajba9.jpg', 'gajba10.jpg', 'gajba11.jpg', 'gajba12.jpg', 'gajba13.jpg', 'gajba14.jpg', 'gajba15.jpg', 'gajba16.jpg', 'gajba17.jpg'])
 #main2()
 
-main(['gajba3.jpg', 'gajba7.jpg', 'gajba8.jpg', 'gajba11.jpg', 'gajba12.jpg', 'gajba15.jpg'])
+#main(['gajba3.jpg', 'gajba7.jpg', 'gajba8.jpg', 'gajba11.jpg', 'gajba12.jpg', 'gajba15.jpg'])
+#main(['gajba3.jpg'])
+
+def main2():
+    infrastructure = np.array([2, 3, 2])
+    initial_values = np.array([1, 0])
+    network = neural.Network()
+
+    nodeCount = infrastructure.sum()
+    for i in range(0, infrastructure.__len__()):
+
+        for layerCount in range(0, infrastructure[i]):
+            node = neural.Node()
+            if i == 0:
+                node.value = initial_values[i]
+            node.bias = randint(-10, 10)
+            network.add_node("layer" + str(i + 1) + "node"+str(layerCount), node)
+
+
+
+    network.show_network()
+
+def main3():
+    cap = cv2.VideoCapture('videos4/VIDEO0017.mp4')
+    print cv2.__version__
+    frameCounter = 0
+    font = cv2.FONT_HERSHEY_SIMPLEX
+
+    while True:
+        trainingData = []
+        flag, frame = cap.read()
+        if flag == 0:
+            break
+        #cv2.imshow("Video", frame)
+        key_pressed = cv2.waitKey(10)  # Escape to exit
+        if key_pressed == 27:
+            break
+
+        originalImg = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        #originalImg = cv2.imread(frame, 0)
+
+        width, height = originalImg.shape
+        cimg = cv2.cvtColor(originalImg, cv2.COLOR_GRAY2BGR)
+
+        img = smoothing_filter(originalImg, 4)
+
+        #cv2.imwrite("smooth_" + image, img)
+
+        sobelv = np.ones((width, height))
+        sobelh = np.ones((width, height))
+
+        img, sobelv, sobelh, maxval = sobel_filter(img, 3)
+
+        # dirMap, img = thresholdandfinddirectionmap(img, width, height, sobelh, sobelv, maxval, 200)
+
+        # img = edgeEnhance(originalImg, img, width, height, mexhatsmall)
+
+        # abspace = accumulateinab(img, width, height, dirMap, 5, 15)
+
+        # absspace = enhanceabspace(abspace, width, height, 50)
+
+        cv2.imwrite("sobel.png", img)
+        img = cv2.imread("sobel.png", 0)
+
+        circles = cv2.HoughCircles(img, cv2.cv.CV_HOUGH_GRADIENT, 1, 10,
+                                   param1=10, param2=30, minRadius=10, maxRadius=20)
+        gridSize = 3  # from center 3 pixels in every direction
+
+
+        if circles is None:
+            cv2.imshow("Video", cimg)
+            #cv2.imwrite("frames/frame" + str(frameCounter) + ".png", cimg)
+            frameCounter += 1
+            continue
+        size, la = circles[0].shape
+
+        nearSomeone = 0
+        circlesNotValidIndexes = []
+        for i in range(0, size):
+            currentX = circles[0][i][0]
+            currentY = circles[0][i][1]
+            nearSomeone = 0
+            j = 0
+            while j < size and nearSomeone < 2:
+                if(i == j):
+                    j += 1
+                    continue
+                elseX = circles[0][j][0]
+                elseY = circles[0][j][1]
+                if math.fabs(currentX - elseX) <= 30:
+                    nearSomeone = nearSomeone + 1
+                if math.fabs(currentY - elseY) <= 30:
+                    nearSomeone = nearSomeone + 1
+                j += 1
+            if nearSomeone < 2:
+                circles[0][i] = (0, 0, 0)
+                #circlesNotValidIndexes.append(i)
+
+        circles_x_coords = []
+        circles_y_coords = []
+        circles_radius = []
+        circles_flags = []
+
+        centers = []
+
+        counter = 0
+        for i in circles[0, :]:
+            if counter in circlesNotValidIndexes:
+                counter += 1
+                continue
+
+            centrY = int(i[0])
+            circles_x_coords.append(centrY)
+            centrX = int(i[1])
+            circles_y_coords.append(centrX)
+            radius = int(i[2])
+            circles_radius.append(radius)
+
+            if(centrY == 0 and centrX == 0):
+                counter += 1
+                continue
+            trData = [centrY, centrX, radius, 0, 0]
+
+            suma = 0
+            normalizeValue = gridSize * 2 + 1
+            suma += originalImg[centrX][centrY]
+            for j in range(1, gridSize + 1):
+                if centrX + j < width and centrX - j >= 0 and centrY + j < width and centrY-j >= 0:
+                    suma += originalImg[centrX + j][centrY]
+                    normalizeValue = normalizeValue - 8
+
+                    suma += originalImg[centrX + j][centrY + j]
+                    suma += originalImg[centrX][centrY + j]
+                    suma += originalImg[centrX - j][centrY]
+                    suma += originalImg[centrX - j][centrY - j]
+                    suma += originalImg[centrX][centrY - 1]
+                    suma += originalImg[centrX + j][centrY - j]
+                    suma += originalImg[centrX - j][centrY + j]
+#
+            if suma == 0:
+                continue
+
+            normalizeValue *= normalizeValue
+            suma = suma / normalizeValue
+#
+            # averages[counter] = suma
+            # counter = counter + 1
+
+            trData[4] = suma
+            if (suma <= 13):
+                cv2.circle(cimg, (i[0], i[1]), i[2], (0, 255, 0), 2)
+                trData[3] = 1
+                center = (i[0], i[1], 1)
+                circles_flags.append(1)
+            else:
+                cv2.circle(cimg, (i[0], i[1]), i[2], (0, 0, 255), 2)
+                # cv2.circle(cimg, (i[0], i[1]), 2, (0, 0, 255), 3)
+                trData[3] = 0
+                center = (i[0], i[1], 0)
+                circles_flags.append(0)
+            centers.append(center)
+
+            trainingData.append(trData)
+            counter += 1
+        dtype = [('x', float), ('y', float), ('good', int)]
+
+        npArray = np.array(centers, dtype)
+
+        npArray = np.sort(npArray, order='y')
+        npArray = np.sort(npArray, order='x')
+
+
+        indexes = ''
+        redFlagCounter = 0
+        for i in range(0, npArray.size):
+            sortX,sortY,flag = npArray[i]
+            if(flag == 0):
+                redFlagCounter += 1
+                indexes += str(i+1) + ','
+            if (i == npArray.size - 1):
+                indexes = indexes[:-1]
+
+        cv2.putText(cimg, 'Found:' + str(redFlagCounter), (0, 30), font, 1, (0, 0, 0), 2)
+        cv2.putText(cimg, 'Indexes:' + indexes, (0, 60), font, 1, (0, 0, 0), 2)
+        cv2.imshow("Video", cimg)
+
+        #cv2.imwrite("frames/frame"+str(frameCounter)+".png",cimg)
+        frameCounter += 1
+        numpyArrayTransform = np.array(trainingData)
+
+        time.sleep(1)
+        del trainingData[:]
+        # Write the array to disk
+        #with file('test.txt', 'a') as outfile:
+            #outfile.write("#Sample number:("+str(frameCounter)+")\n")
+            #np.savetxt(outfile, numpyArrayTransform, fmt='%-7.2f')
+
+    cap.release()
+    cv2.destroyAllWindows()
+
+def plotVideoSamples():
+    with file('test.txt', 'r') as outfile:
+
+        result = np.loadtxt(outfile)
+        print result
+def testing():
+    testSample = [628.00, 609.00, 372.00, 609.00, 260.00]
+    mean = 0
+    for i in range(0, testSample.__len__()):
+        for j in range(0, testSample.__len__()):
+            if(i == j):
+                continue
+
+    #print diffResult
+
+#main(['bwi.jpg'])
+#main3()
+#main2()
+#plotVideoSamples()
+#testing()
+
+class MainWindow(QMainWindow, Ui_MainWindow):
+    def __init__(self, parent=None):
+        super(MainWindow, self).__init__(parent)
+        self.setupUi(self)
+        self.setup_camera()
+        self.StartButton.clicked.connect(self.video_processing)
+
+        self.videoFullyProcessed = False
+        self.nextFrameRequested = True
+        self.overrideFlag = False
+        self.SetStateBadButton.clicked.connect(self.override)
+
+        self.VideoView.mousePressEvent = self.drawCircle
+        self.VideoView.mouseMoveEvent = self.showCoords
+        self.VideoView.wheelEvent = self.next_frame
+        self.scene = QtGui.QGraphicsScene()
+        self.VideoView.setScene(self.scene)
+
+
+    def override(self):
+        self.overrideFlag=  not self.overrideFlag
+        self.nextFrameRequested = True
+    def video_processing(self):
+        fileName, _ = QtGui.QFileDialog.getOpenFileName(self, "Open File",
+                                                        QtCore.QDir.currentPath())
+        if fileName:
+            self.capture = cv2.VideoCapture(fileName)
+            if self.capture is None:
+                QtGui.QMessageBox.information(self, "Image Viewer",
+                                          "Cannot load %s." % fileName)
+                return
+        self.timer.start(30)
+
+    def next_frame(self, event):
+        self.nextFrameRequested = True
+
+    def showCoords(self, point):
+        xPoint = point.x()
+        yPoint = point.y()
+        self.coordLabel.setText("X: "+ str(xPoint) + "  Y: " + str(yPoint))
+
+    def drawCircle(self, point):
+
+        pressedButtons = point.buttons()
+        pen = QtGui.QPen()
+        if pressedButtons == QtCore.Qt.LeftButton:
+            pen.setColor("Green")
+        elif pressedButtons == QtCore.Qt.RightButton:
+            pen.setColor("Red")
+        else:
+            pen.setColor("White")
+
+        pen.setWidth(3)
+        brush = QtGui.QBrush()
+        #brush.setColor("Red")
+
+        xPoint = point.x()
+        yPoint = point.y()
+
+        self.scene.addEllipse(xPoint-10, yPoint-10, 20, 20, pen, brush)
+
+        self.VideoView.setScene(self.scene)
+
+    def open(self):
+        fileName, _ = QtGui.QFileDialog.getOpenFileName(self, "Open File",
+                                                        QtCore.QDir.currentPath())
+        if fileName:
+            image = QtGui.QImage(fileName)
+            if image.isNull():
+                QtGui.QMessageBox.information(self, "Image Viewer",
+                                              "Cannot load %s." % fileName)
+                return
+            self.scene.setSceneRect(image.rect())
+            self.scene.addPixmap(QtGui.QPixmap.fromImage(image))
+            self.VideoView.setScene(self.scene)
+
+            self.scaleFactor = 1.0
+            self.VideoView.autoFillBackground()
+
+            self.VideoView.fitInView(self.VideoView.rect())
+
+    def setup_camera(self):
+        """Initialize camera.
+        """
+        #self.capture = cv2.VideoCapture('videos4/VIDEO0017.mp4')
+
+        #self.capture.set(cv2.cv.CV_CAP_PROP_FRAME_WIDTH, self.video_size.width())
+        #self.capture.set(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT, self.video_size.height())
+
+        self.timer = QtCore.QTimer()
+        self.timer.timeout.connect(self.display_video_stream)
+
+    def display_video_stream(self):
+        if self.nextFrameRequested:
+
+            flag, frame = self.capture.read()
+            if flag == 0:
+                self.videoFullyProcessed = True
+                self.timer.stop()
+                self.capture.release()
+
+                return
+
+            self.videoFullyProcessed = False
+            frame = cv2.cvtColor(frame, cv2.cv.CV_BGR2RGB)
+            frame = cv2.flip(frame, 1)
+            image = QtGui.QImage(frame, frame.shape[1], frame.shape[0],
+                           frame.strides[0], QtGui.QImage.Format_RGB888)
+
+            self.scene.clear()
+            self.scene.update()
+            self.scene.setSceneRect(image.rect())
+            self.scene.addPixmap(QtGui.QPixmap.fromImage(image))
+            self.VideoView.setScene(self.scene)
+
+            self.scaleFactor = 1.0
+            self.VideoView.autoFillBackground()
+
+            self.VideoView.fitInView(self.VideoView.rect())
+
+            if(self.overrideFlag):
+                return
+            self.nextFrameRequested = False
+
+
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    frame = MainWindow()
+    frame.show()
+    app.exec_()
