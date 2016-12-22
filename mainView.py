@@ -20,12 +20,15 @@ from sklearn.neural_network import MLPClassifier
 class MainWindow(QtGui.QMainWindow, ui.Ui_MainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
+
+        self.keyPressEvent = self.key_press_handler
+
         self.setupUi(self)
         self.init_actions()
         #flag for autoplay
         self.autoplaying = False
         #pointer to classifier
-        self.clf = None
+        self.classifier = None
         self.graphics_scene = QtGui.QGraphicsScene()
         self.graphics_scene.setBackgroundBrush(QtGui.QBrush(QtGui.QColor(0, 0, 0, 255)))
         self.graphicsView.setScene(self.graphics_scene)
@@ -39,6 +42,9 @@ class MainWindow(QtGui.QMainWindow, ui.Ui_MainWindow):
         self.init_graphics_component()
 
         self.items = list()
+
+        self.trainingData = None
+
         self.view_capture = None
 
         #timer for autoplay
@@ -46,8 +52,12 @@ class MainWindow(QtGui.QMainWindow, ui.Ui_MainWindow):
         self.timer.timeout.connect(self.next_frame)
 
     def init_learning(self):
-        self.clf = MLPClassifier(solver='lbfgs', alpha=1e-5, hidden_layer_sizes= (15,), random_state= 1)
+        self.classifier = MLPClassifier(solver='lbfgs', alpha=1e-5, hidden_layer_sizes= (15,), random_state= 1)
 
+    def key_press_handler(self, event):
+        if event.key() is 83:
+            print "Saving"
+        #print event.key()
     def init_actions(self):
         self.goodButton.clicked.connect(lambda: self.good_button_action())
         self.badButton.clicked.connect(lambda: self.bad_button_action())
@@ -79,7 +89,7 @@ class MainWindow(QtGui.QMainWindow, ui.Ui_MainWindow):
         obj = self.element.left_click(position, self.graphics_scene)
         if obj is not None:
             self.items.append(obj)
-            print(obj.rect().center())
+            print(obj.rect().center().x())
             print(self.items)
 
     def right_click(self, position):
@@ -121,7 +131,8 @@ class MainWindow(QtGui.QMainWindow, ui.Ui_MainWindow):
     def next_frame(self):
         if self.view_capture is not None:
             flag, frame = self.view_capture.read()
-            self.show_frame(frame)
+            if flag:
+                self.show_frame(frame)
 
     def back_frame(self):
         print("back")
@@ -156,17 +167,18 @@ class MainWindow(QtGui.QMainWindow, ui.Ui_MainWindow):
         yPoint = point.y()
         self.status_label.setText("X: " + str(xPoint) + "  Y: " + str(yPoint))
 
-    def quadratic_mean(xCentar, yCentar, radius, picture):  # mora da se prosledi gray_scale image
+    def quadriatic_mean_circle(xCentar, yCentar, radius, picture):  # mora da se prosledi gray_scale image
         # ove 2 promenjive su za rucno izracunavanje, svuda odkomentarisati ako treba to
         sum = 0
         numberOfPixels = 0
+        radius = radius * radius
         image = copy.deepcopy(picture)
         array = []
         width = np.size(picture, 0)
         height = np.size(picture, 1)
         for x in range(xCentar - radius, xCentar + 1):
             for y in range(yCentar - radius, yCentar + 1):
-                if ((x - xCentar) * (x - xCentar) + (y - yCentar) * (y - yCentar) <= radius * radius):
+                if ((x - xCentar) * (x - xCentar) + (y - yCentar) * (y - yCentar) <= radius):  # radius * radius
                     xSym = xCentar - (x - xCentar)
                     ySym = yCentar - (y - yCentar)
                     # (x, y), (x, ySym), (xSym , y), (xSym, ySym) are in the circle
@@ -183,22 +195,23 @@ class MainWindow(QtGui.QMainWindow, ui.Ui_MainWindow):
                         array.append(int(picture[x, y]))
                         sum += int(picture[x, y]) * int(picture[x, y])
                         numberOfPixels += 1
-                    if ((x >= 0) & (width > x) & (ySym >= 0) & (height > ySym)):
+                    if ((x >= 0) & (width > x) & (ySym >= 0) & (height > ySym) & (y != ySym)):
                         image[x, ySym] = 255
                         array.append(int(picture[x, ySym]))
                         sum += int(picture[x, ySym]) * int(picture[x, ySym])
                         numberOfPixels += 1
-                    if ((xSym >= 0) & (width > xSym) & (y >= 0) & (height > y)):
+                    if ((xSym >= 0) & (width > xSym) & (y >= 0) & (height > y) & (xSym != x)):
                         image[xSym, y] = 255
                         array.append(int(picture[xSym, y]))
                         sum += int(picture[xSym, y]) * int(picture[xSym, y])
                         numberOfPixels += 1
-                    if ((xSym >= 0) & (width > xSym) & (ySym >= 0) & (height > ySym)):
+                    if ((xSym >= 0) & (width > xSym) & (ySym >= 0) & (height > ySym) & (xSym != x) & (y != ySym)):
                         image[xSym, ySym] = 255
                         array.append(int(picture[xSym, ySym]))
                         sum += int(picture[xSym, ySym]) * int(picture[xSym, ySym])
                         numberOfPixels += 1
-        # cv2.imwrite('krugTest.png', image) # sacuva sliku sa iscrtanim belim krugom, za proveru radiusa
+
+        #cv2.imwrite('krugTest.png', image)  # sacuva sliku sa iscrtanim belim krugom, za proveru radiusa
 
         # cuva u fajl vrednosti 0-255 za izmenjenu sliku i original, za proveru vrednosti
         # povecati for petlje za duzinu slike ako zatreba, duze traje upisivanje u txt !!!
@@ -217,8 +230,8 @@ class MainWindow(QtGui.QMainWindow, ui.Ui_MainWindow):
         #    f.write('\n')
         #    f.close()
 
-        # pom2 = int(np.mean(array, dtype=np.float64))
-        pom = int(np.sqrt(sum / numberOfPixels))  # ako treba da se vrati rucno izracunavanje
+        #pom2 = int(np.mean(array, dtype=np.float64))
+        pom = int(np.sqrt(sum/numberOfPixels)) # ako treba da se vrati rucno izracunavanje
         return pom
 
 

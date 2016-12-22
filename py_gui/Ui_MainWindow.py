@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'ui/main2.ui'
 #
-# Created: Wed Dec 21 23:13:19 2016
+# Created: Thu Dec 22 23:25:57 2016
 #      by: pyside-uic 0.2.15 running on PySide 1.2.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -31,6 +31,7 @@ class Ui_MainWindow(object):
         self.graphicsView.setInteractive(True)
         self.graphicsView.setSceneRect(QtCore.QRectF(0.0, 0.0, 480.0, 640.0))
         self.graphicsView.setAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft|QtCore.Qt.AlignTop)
+        self.graphicsView.setTransformationAnchor(QtGui.QGraphicsView.NoAnchor)
         self.graphicsView.setObjectName("graphicsView")
         self.horizontalLayout_4.addWidget(self.graphicsView)
         self.verticalLayout_7 = QtGui.QVBoxLayout()

@@ -678,47 +678,49 @@ def testing():
 
 def pixelsInCircle(xCentar, yCentar, radius, picture): # mora da se prosledi gray_scale image
     # ove 2 promenjive su za rucno izracunavanje, svuda odkomentarisati ako treba to
-    sum = 0
-    numberOfPixels = 0
+    #sum = 0
+    #numberOfPixels = 0
+    radius = radius * radius
     image = copy.deepcopy(picture)
     array = []
     width = np.size(picture, 0)
     height = np.size(picture, 1)
     for x in range(xCentar - radius, xCentar+1):
         for y in range(yCentar - radius, yCentar+1):
-            if ((x - xCentar)*(x - xCentar) + (y - yCentar)*(y - yCentar) <= radius*radius):
+            if ((x - xCentar)*(x - xCentar) + (y - yCentar)*(y - yCentar) <= radius): # radius * radius
                 xSym = xCentar - (x - xCentar)
                 ySym = yCentar - (y - yCentar)
                 #(x, y), (x, ySym), (xSym , y), (xSym, ySym) are in the circle
                 # Ovo je za slucaj bez uslova, ako zatreba brzina izvrsavanja
                 # -----------------------------------------------------
-                sum += int(picture[x, y]) * int(picture[x, y])
-                sum += int(picture[x, ySym]) * int(picture[x, ySym])
-                sum += int(picture[xSym, y]) * int(picture[xSym, y])
-                sum += int(picture[xSym, ySym]) * int(picture[xSym, ySym])
-                numberOfPixels += 4
+                #sum += int(picture[x, y]) * int(picture[x, y])
+                #sum += int(picture[x, ySym]) * int(picture[x, ySym])
+                #sum += int(picture[xSym, y]) * int(picture[xSym, y])
+                #sum += int(picture[xSym, ySym]) * int(picture[xSym, ySym])
+                #numberOfPixels += 4
                 # -----------------------------------------------------
                 if ((x >= 0) & (width > x) & (y >= 0) & (height > y)):
                     image[x, y] = 255
                     array.append(int(picture[x, y]))
-                    sum += int(picture[x, y]) * int(picture[x, y])
-                    numberOfPixels += 1
-                if ((x >= 0) & (width > x) & (ySym >= 0) & (height > ySym)):
+                    #sum += int(picture[x, y]) * int(picture[x, y])
+                    #numberOfPixels += 1
+                if ((x >= 0) & (width > x) & (ySym >= 0) & (height > ySym) & (y != ySym)):
                     image[x, ySym] = 255
                     array.append(int(picture[x, ySym]))
-                    sum += int(picture[x, ySym]) * int(picture[x, ySym])
-                    numberOfPixels += 1
-                if ((xSym >= 0) & (width > xSym) & (y >= 0) & (height > y)):
+                    #sum += int(picture[x, ySym]) * int(picture[x, ySym])
+                    #numberOfPixels += 1
+                if ((xSym >= 0) & (width > xSym) & (y >= 0) & (height > y) & (xSym != x)):
                     image[xSym, y] = 255
                     array.append(int(picture[xSym, y]))
-                    sum += int(picture[xSym, y]) * int(picture[xSym, y])
-                    numberOfPixels += 1
-                if ((xSym >= 0) & (width > xSym) & (ySym >= 0) & (height > ySym)):
+                    #sum += int(picture[xSym, y]) * int(picture[xSym, y])
+                    #numberOfPixels += 1
+                if ((xSym >= 0) & (width > xSym) & (ySym >= 0) & (height > ySym) & (xSym != x) & (y != ySym)):
                     image[xSym, ySym] = 255
                     array.append(int(picture[xSym, ySym]))
-                    sum += int(picture[xSym, ySym]) * int(picture[xSym, ySym])
-                    numberOfPixels += 1
-    #cv2.imwrite('krugTest.png', image) # sacuva sliku sa iscrtanim belim krugom, za proveru radiusa
+                    #sum += int(picture[xSym, ySym]) * int(picture[xSym, ySym])
+                    #numberOfPixels += 1
+
+    cv2.imwrite('krugTest.png', image) # sacuva sliku sa iscrtanim belim krugom, za proveru radiusa
 
     # cuva u fajl vrednosti 0-255 za izmenjenu sliku i original, za proveru vrednosti
     # povecati for petlje za duzinu slike ako zatreba, duze traje upisivanje u txt !!!
@@ -737,9 +739,9 @@ def pixelsInCircle(xCentar, yCentar, radius, picture): # mora da se prosledi gra
     #    f.write('\n')
     #    f.close()
 
-    #pom2 = int(np.mean(array, dtype=np.float64))
-    pom = int(np.sqrt(sum/numberOfPixels)) # ako treba da se vrati rucno izracunavanje
-    return pom
+    pom2 = int(np.mean(array, dtype=np.float64))
+    #pom = int(np.sqrt(sum/numberOfPixels)) # ako treba da se vrati rucno izracunavanje
+    return pom2
 
 
 class MainWindow(QMainWindow, Ui_MainWindow):
@@ -789,7 +791,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         f.close()
 
     def override(self):
-        self.overrideFlag=not self.overrideFlag
+        self.overrideFlag=  not self.overrideFlag
         self.nextFrameRequested = True
     def video_processing(self):
         fileName, _ = QtGui.QFileDialog.getOpenFileName(self, "Open File",
@@ -837,12 +839,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 #gray_image = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
                 gray_image = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
                 #pixelsInCircle(point.x(), point.y(), 50, gray_image) 
-                val = pixelsInCircle(point.y(), point.x(), 15, gray_image)
+                val = pixelsInCircle(point.y(), point.x(), 15, gray_image) #15
                 self.nonCepValues.append(val)
                 print "nonCep: " + str(val)
         if pressedButtons == QtCore.Qt.RightButton:
                 gray_image = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-                val = pixelsInCircle(point.y(), point.x(), 12, gray_image)
+                val = pixelsInCircle(point.y(), point.x(), 12, gray_image) #12
                 self.cepValues.append(val)
                 print "Cep: " + str(val)
 
