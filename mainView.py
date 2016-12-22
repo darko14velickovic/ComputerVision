@@ -13,17 +13,23 @@ from scene.CirlceObject import CircleObject
 from scene.NullObject import NullObject
 import py_gui.Ui_MainWindow as ui
 import cv2
-
+import copy
+import numpy as np
+from sklearn.neural_network import MLPClassifier
 
 class MainWindow(QtGui.QMainWindow, ui.Ui_MainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
         self.setupUi(self)
         self.init_actions()
-
+        #flag for autoplay
+        self.autoplaying = False
+        #pointer to classifier
+        self.clf = None
         self.graphics_scene = QtGui.QGraphicsScene()
         self.graphics_scene.setBackgroundBrush(QtGui.QBrush(QtGui.QColor(0, 0, 0, 255)))
         self.graphicsView.setScene(self.graphics_scene)
+        self.checkBox.stateChanged.connect(self.check_box_click)
 
         self.brush = QtGui.QBrush(QtCore.Qt.black)
         self.pen = QtGui.QPen()
@@ -35,6 +41,13 @@ class MainWindow(QtGui.QMainWindow, ui.Ui_MainWindow):
         self.items = list()
         self.view_capture = None
 
+        #timer for autoplay
+        self.timer = QtCore.QTimer()
+        self.timer.timeout.connect(self.next_frame)
+
+    def init_learning(self):
+        self.clf = MLPClassifier(solver='lbfgs', alpha=1e-5, hidden_layer_sizes= (15,), random_state= 1)
+
     def init_actions(self):
         self.goodButton.clicked.connect(lambda: self.good_button_action())
         self.badButton.clicked.connect(lambda: self.bad_button_action())
@@ -43,6 +56,9 @@ class MainWindow(QtGui.QMainWindow, ui.Ui_MainWindow):
         self.backButton.clicked.connect(lambda: self.back_frame())
 
         self.actionOpen.triggered.connect(self.open)
+
+        # autoplay action
+        self.actionAutoplay.triggered.connect(self.autoplay)
 
     def init_graphics_component(self):
         self.graphics_scene.mousePressEvent = self.graphics_view_click
@@ -59,6 +75,7 @@ class MainWindow(QtGui.QMainWindow, ui.Ui_MainWindow):
         self.element.graphics_view_mouse_drag(drag, self.graphics_scene)
 
     def left_click(self, position):
+        self.showCoords(position.scenePos())
         obj = self.element.left_click(position, self.graphics_scene)
         if obj is not None:
             self.items.append(obj)
@@ -108,6 +125,102 @@ class MainWindow(QtGui.QMainWindow, ui.Ui_MainWindow):
 
     def back_frame(self):
         print("back")
+    def check_box_click(self, event):
+        if event == 2:
+            print "Enabled"
+            self.graphicsView.wheelEvent = self.scroll_to_next_frame
+        elif event == 0:
+            print "Disabled"
+            self.graphicsView.wheelEvent = self.scroll_dummy_func
+        print event
+
+
+    def autoplay(self):
+        if self.autoplaying:
+            self.timer.stop()
+            self.actionAutoplay.setText("Autoplay")
+        else:
+            self.timer.start(1000)
+            self.actionAutoplay.setText("Stop autoplay")
+        self.autoplaying = not self.autoplaying
+
+    def scroll_to_next_frame(self,event):
+        self.next_frame()
+
+    def scroll_dummy_func(self, event):
+        #status text print...
+        print "Scroll video disabled"
+
+    def showCoords(self, point):
+        xPoint = point.x()
+        yPoint = point.y()
+        self.status_label.setText("X: " + str(xPoint) + "  Y: " + str(yPoint))
+
+    def quadratic_mean(xCentar, yCentar, radius, picture):  # mora da se prosledi gray_scale image
+        # ove 2 promenjive su za rucno izracunavanje, svuda odkomentarisati ako treba to
+        sum = 0
+        numberOfPixels = 0
+        image = copy.deepcopy(picture)
+        array = []
+        width = np.size(picture, 0)
+        height = np.size(picture, 1)
+        for x in range(xCentar - radius, xCentar + 1):
+            for y in range(yCentar - radius, yCentar + 1):
+                if ((x - xCentar) * (x - xCentar) + (y - yCentar) * (y - yCentar) <= radius * radius):
+                    xSym = xCentar - (x - xCentar)
+                    ySym = yCentar - (y - yCentar)
+                    # (x, y), (x, ySym), (xSym , y), (xSym, ySym) are in the circle
+                    # Ovo je za slucaj bez uslova, ako zatreba brzina izvrsavanja
+                    # -----------------------------------------------------
+                    sum += int(picture[x, y]) * int(picture[x, y])
+                    sum += int(picture[x, ySym]) * int(picture[x, ySym])
+                    sum += int(picture[xSym, y]) * int(picture[xSym, y])
+                    sum += int(picture[xSym, ySym]) * int(picture[xSym, ySym])
+                    numberOfPixels += 4
+                    # -----------------------------------------------------
+                    if ((x >= 0) & (width > x) & (y >= 0) & (height > y)):
+                        image[x, y] = 255
+                        array.append(int(picture[x, y]))
+                        sum += int(picture[x, y]) * int(picture[x, y])
+                        numberOfPixels += 1
+                    if ((x >= 0) & (width > x) & (ySym >= 0) & (height > ySym)):
+                        image[x, ySym] = 255
+                        array.append(int(picture[x, ySym]))
+                        sum += int(picture[x, ySym]) * int(picture[x, ySym])
+                        numberOfPixels += 1
+                    if ((xSym >= 0) & (width > xSym) & (y >= 0) & (height > y)):
+                        image[xSym, y] = 255
+                        array.append(int(picture[xSym, y]))
+                        sum += int(picture[xSym, y]) * int(picture[xSym, y])
+                        numberOfPixels += 1
+                    if ((xSym >= 0) & (width > xSym) & (ySym >= 0) & (height > ySym)):
+                        image[xSym, ySym] = 255
+                        array.append(int(picture[xSym, ySym]))
+                        sum += int(picture[xSym, ySym]) * int(picture[xSym, ySym])
+                        numberOfPixels += 1
+        # cv2.imwrite('krugTest.png', image) # sacuva sliku sa iscrtanim belim krugom, za proveru radiusa
+
+        # cuva u fajl vrednosti 0-255 za izmenjenu sliku i original, za proveru vrednosti
+        # povecati for petlje za duzinu slike ako zatreba, duze traje upisivanje u txt !!!
+        # for i in range(0, width/3):
+        #    for j in range(0, height/3):
+        #        f = open('image.txt', 'a')
+        #        f.write(str(image[i,j]) + " ")
+        #        f.close()
+        #        f = open('picture.txt', 'a')
+        #        f.write(str(picture[i,j]) + " ")
+        #        f.close()
+        #    f = open('image.txt', 'a')
+        #    f.write('\n')
+        #    f.close()
+        #    f = open('picture.txt', 'a')
+        #    f.write('\n')
+        #    f.close()
+
+        # pom2 = int(np.mean(array, dtype=np.float64))
+        pom = int(np.sqrt(sum / numberOfPixels))  # ako treba da se vrati rucno izracunavanje
+        return pom
+
 
 if __name__ == '__main__':
     app = QtGui.QApplication(sys.argv)

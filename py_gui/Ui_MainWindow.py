@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'main2.ui'
+# Form implementation generated from reading ui file 'ui/main2.ui'
 #
-# Created: Wed Dec 21 20:36:15 2016
+# Created: Wed Dec 21 23:13:19 2016
 #      by: pyside-uic 0.2.15 running on PySide 1.2.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -26,8 +26,8 @@ class Ui_MainWindow(object):
         self.horizontalLayout_4.setObjectName("horizontalLayout_4")
         self.graphicsView = QtGui.QGraphicsView(self.centralwidget)
         self.graphicsView.setEnabled(True)
-        self.graphicsView.setGeometry(QtCore.QRect(40, 30, 761, 781))
         self.graphicsView.setMouseTracking(True)
+        self.graphicsView.setAutoFillBackground(False)
         self.graphicsView.setInteractive(True)
         self.graphicsView.setSceneRect(QtCore.QRectF(0.0, 0.0, 480.0, 640.0))
         self.graphicsView.setAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft|QtCore.Qt.AlignTop)
@@ -41,7 +41,7 @@ class Ui_MainWindow(object):
         self.verticalLayout_4.setObjectName("verticalLayout_4")
         self.label_4 = QtGui.QLabel(self.centralwidget)
         self.label_4.setText("")
-        self.label_4.setPixmap(QtGui.QPixmap("ui/res/green32.png"))
+        self.label_4.setPixmap(QtGui.QPixmap("res/green32.png"))
         self.label_4.setAlignment(QtCore.Qt.AlignCenter)
         self.label_4.setObjectName("label_4")
         self.verticalLayout_4.addWidget(self.label_4)
@@ -53,7 +53,7 @@ class Ui_MainWindow(object):
         self.verticalLayout_5.setObjectName("verticalLayout_5")
         self.label_5 = QtGui.QLabel(self.centralwidget)
         self.label_5.setText("")
-        self.label_5.setPixmap(QtGui.QPixmap("ui/res/red32.png"))
+        self.label_5.setPixmap(QtGui.QPixmap("res/red32.png"))
         self.label_5.setAlignment(QtCore.Qt.AlignCenter)
         self.label_5.setObjectName("label_5")
         self.verticalLayout_5.addWidget(self.label_5)
@@ -70,7 +70,7 @@ class Ui_MainWindow(object):
         self.verticalLayout_6.setObjectName("verticalLayout_6")
         self.label_6 = QtGui.QLabel(self.groupBox)
         self.label_6.setText("")
-        self.label_6.setPixmap(QtGui.QPixmap("ui/res/no_tool64.png"))
+        self.label_6.setPixmap(QtGui.QPixmap("res/no_tool64.png"))
         self.label_6.setAlignment(QtCore.Qt.AlignCenter)
         self.label_6.setObjectName("label_6")
         self.verticalLayout_6.addWidget(self.label_6)
@@ -133,7 +133,10 @@ class Ui_MainWindow(object):
         self.actionOpen.setObjectName("actionOpen")
         self.actionAbout = QtGui.QAction(MainWindow)
         self.actionAbout.setObjectName("actionAbout")
+        self.actionAutoplay = QtGui.QAction(MainWindow)
+        self.actionAutoplay.setObjectName("actionAutoplay")
         self.menuFile.addAction(self.actionOpen)
+        self.menuFile.addAction(self.actionAutoplay)
         self.menuHelp.addAction(self.actionAbout)
         self.menubar.addAction(self.menuFile.menuAction())
         self.menubar.addAction(self.menuHelp.menuAction())
@@ -158,4 +161,5 @@ class Ui_MainWindow(object):
         self.menuHelp.setTitle(QtGui.QApplication.translate("MainWindow", "Help", None, QtGui.QApplication.UnicodeUTF8))
         self.actionOpen.setText(QtGui.QApplication.translate("MainWindow", "Open", None, QtGui.QApplication.UnicodeUTF8))
         self.actionAbout.setText(QtGui.QApplication.translate("MainWindow", "About", None, QtGui.QApplication.UnicodeUTF8))
+        self.actionAutoplay.setText(QtGui.QApplication.translate("MainWindow", "Autoplay", None, QtGui.QApplication.UnicodeUTF8))
 
