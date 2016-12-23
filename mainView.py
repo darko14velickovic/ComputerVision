@@ -31,6 +31,7 @@ class MainWindow(QtGui.QMainWindow, ui.Ui_MainWindow):
         self.classifier = None
         self.graphics_scene = QtGui.QGraphicsScene()
         self.graphics_scene.setBackgroundBrush(QtGui.QBrush(QtGui.QColor(0, 0, 0, 255)))
+
         self.graphicsView.setScene(self.graphics_scene)
         self.checkBox.stateChanged.connect(self.check_box_click)
 

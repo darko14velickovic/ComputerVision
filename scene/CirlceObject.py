@@ -1,5 +1,6 @@
 from PySide import QtCore, QtGui
 
+import copy
 
 class CircleObject:
 
@@ -11,7 +12,8 @@ class CircleObject:
         self.is_start = False
         self.pen = QtGui.QPen("Black")
         self.alpha = 100
-
+        self.x = 0
+        self.y = 0
         if mode == "Good":
             self.active_color = QtGui.QColor(139, 195, 74, self.alpha)
             self.brush = QtGui.QBrush(self.active_color)
@@ -23,15 +25,15 @@ class CircleObject:
 
     def left_click(self, position, scene):
         if not self.is_start:
-            x = position.scenePos().x()
-            y = position.scenePos().y()
+            self.x = position.scenePos().x()
+            self.y = position.scenePos().y()
 
-            self.center_circle = QtGui.QGraphicsEllipseItem(x - self.center_radius/2, y - self.center_radius/2,
+            self.center_circle = QtGui.QGraphicsEllipseItem(self.x - self.center_radius/2, self.y - self.center_radius/2,
                                                             self.center_radius, self.center_radius)
             self.center_circle.setBrush(QtGui.QBrush(QtCore.Qt.black))
             self.center_circle.setPen(self.pen)
 
-            self.circle = QtGui.QGraphicsEllipseItem(x, y, 1, 1)
+            self.circle = QtGui.QGraphicsEllipseItem(self.x, self.y, 1, 1)
             self.circle.setBrush(self.brush)
             self.circle.setPen(self.pen)
 
@@ -44,7 +46,7 @@ class CircleObject:
         else:
             self.is_start = False
             scene.removeItem(self.center_circle)
-            return self.circle
+            return self
 
     def right_click(self, position, scene, items):
         if self.is_start:
@@ -55,11 +57,11 @@ class CircleObject:
             x = position.scenePos().x()
             y = position.scenePos().y()
             for i in range(0, len(items)):
-                o = items[i]
+                o = items[i].circle
                 rect_o = o.rect()
                 if rect_o.right() > x > rect_o.left():
                     if rect_o.top() < y < rect_o.bottom():
-                        if self.active_color == items[i].brush().color():
+                        if self.active_color == items[i].circle.brush().color():
                             items.remove(items[i])
                             scene.removeItem(o)
                             scene.update()
