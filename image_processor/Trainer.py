@@ -70,7 +70,9 @@ class CnnTrainer:
 
                 self.modelTrained = False
                 self.modelLoaded = False
-
+        else:
+            self.modelTrained = False
+            self.modelLoaded = False
 
     def evaluate_img(self, image):
         if self.modelTrained is False:
