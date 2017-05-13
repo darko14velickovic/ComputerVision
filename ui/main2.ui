@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>902</width>
-    <height>801</height>
+    <width>1062</width>
+    <height>705</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -60,6 +60,30 @@
          <layout class="QVBoxLayout" name="verticalLayout_7">
           <item>
            <layout class="QHBoxLayout" name="horizontalLayout_2">
+            <item>
+             <layout class="QVBoxLayout" name="verticalLayout_9">
+              <item>
+               <widget class="QLabel" name="label_7">
+                <property name="text">
+                 <string/>
+                </property>
+                <property name="pixmap">
+                 <pixmap>res/wrong32.png</pixmap>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="wrongButton">
+                <property name="text">
+                 <string>Wrong</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
             <item>
              <layout class="QVBoxLayout" name="verticalLayout_4">
               <item>
@@ -169,6 +193,13 @@
              </widget>
             </item>
             <item>
+             <widget class="QPushButton" name="Relearn">
+              <property name="text">
+               <string>Relearn</string>
+              </property>
+             </widget>
+            </item>
+            <item>
              <layout class="QHBoxLayout" name="horizontalLayout">
               <item>
                <layout class="QVBoxLayout" name="verticalLayout">
@@ -227,6 +258,13 @@
         </property>
        </widget>
       </item>
+      <item>
+       <widget class="QLabel" name="network_status">
+        <property name="text">
+         <string>TextLabel</string>
+        </property>
+       </widget>
+      </item>
      </layout>
     </item>
    </layout>
@@ -236,8 +274,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>902</width>
-     <height>21</height>
+     <width>1062</width>
+     <height>25</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -246,12 +284,16 @@
     </property>
     <addaction name="actionOpen"/>
     <addaction name="actionAutoplay"/>
+    <addaction name="actionLoad_ANN"/>
+    <addaction name="actionClear_classifier"/>
+    <addaction name="actionCreate_classifier"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
      <string>Help</string>
     </property>
     <addaction name="actionAbout"/>
+    <addaction name="actionTake_a_snapshot"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuHelp"/>
@@ -270,6 +312,26 @@
   <action name="actionAutoplay">
    <property name="text">
     <string>Autoplay</string>
+   </property>
+  </action>
+  <action name="actionLoad_ANN">
+   <property name="text">
+    <string>Load ANN</string>
+   </property>
+  </action>
+  <action name="actionClear_classifier">
+   <property name="text">
+    <string>Clear classifier</string>
+   </property>
+  </action>
+  <action name="actionCreate_classifier">
+   <property name="text">
+    <string>Create classifier</string>
+   </property>
+  </action>
+  <action name="actionTake_a_snapshot">
+   <property name="text">
+    <string>Take a snapshot</string>
    </property>
   </action>
  </widget>

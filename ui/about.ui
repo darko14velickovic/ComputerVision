@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>About</class>
+ <widget class="QWidget" name="About">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>626</width>
+    <height>483</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>About</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout_2">
+   <item>
+    <widget class="QLabel" name="about_app">
+     <property name="text">
+      <string>This application is Python 2.7 Pyside desktop application for hybrid image recognition.It uses OpenCV and TFLearn libraries for learning and processing of image/video input. Preprocessing algorithms used are Smoothing and Sobel filter, on which then we applied Hue transform for circle recognition. Purpose of the application is finding and recognizing bottle caps in video feed. Hue is used for finding bottles in the images( in the training process it can make training and sorting of images easier and for testing speeds up the process of finding bottles). Then Quadratic mean error is used in Region of Interest (circle given by Hue) to determine if the circle is Bottle cap or not (bottle caps usually dont have enough black color in Gray Scale). After that the Deep Neural network takes ROI and tests the results. If DNN is more then 70% sure of its classification we say it is right, in all other cases we use Quadratic Mean Error to say if the bottle has a cap or not.</string>
+     </property>
+     <property name="textFormat">
+      <enum>Qt::LogText</enum>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="label_2">
+     <property name="text">
+      <string>Neural network takes images as input (size can be adjusted but we used 40x40 images) with image augmentation (fliping and rotation) and given in full color to the network. Besides input layer, first layer is convolutional_2d layer with Rectefied Linear Activation number of inputs same as the input layer. Next in pipeline is MaxPool layer with factor 2, followed by two convolutional layers both with double of input size inputs, after that there is a fully connected layer with 512 inputs,then dropout layer with factor 0.5. At the end there is one more fully connected layer with 3 inputs and softmax activation. Learning rate is 0.001 because that would represent one value change of RGB intensity, loss function is from Tensorflow ategorical_crossentropy and gradient optimizer is Adaptive Moment Estimation (Adam).  </string>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="label_3">
+     <property name="text">
+      <string>This project is a part of combined assignment for courses of Pattern Recognition &amp; Advanced Image Processing at Faculty of Electronic Engineering,  University of Nis. Project team: Darko Velickovic, Aleksandar Milosevic &amp; Nemanja Mladenovic.</string>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

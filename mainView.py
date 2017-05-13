@@ -12,6 +12,7 @@ from PySide import QtCore, QtGui
 from scene.CirlceObject import CircleObject
 from scene.NullObject import NullObject
 import py_gui.Ui_MainWindow as ui
+import py_gui.SettingsWindow as settings
 import cv2
 import copy
 import numpy as np

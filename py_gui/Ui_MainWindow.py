@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'ui/main2.ui'
+# Form implementation generated from reading ui file 'main2.ui'
 #
-# Created: Thu Dec 22 23:25:57 2016
+# Created: Wed Mar 29 23:10:05 2017
 #      by: pyside-uic 0.2.15 running on PySide 1.2.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -12,7 +12,7 @@ from PySide import QtCore, QtGui
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(902, 801)
+        MainWindow.resize(1062, 705)
         self.centralwidget = QtGui.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.horizontalLayout_5 = QtGui.QHBoxLayout(self.centralwidget)
@@ -38,6 +38,18 @@ class Ui_MainWindow(object):
         self.verticalLayout_7.setObjectName("verticalLayout_7")
         self.horizontalLayout_2 = QtGui.QHBoxLayout()
         self.horizontalLayout_2.setObjectName("horizontalLayout_2")
+        self.verticalLayout_9 = QtGui.QVBoxLayout()
+        self.verticalLayout_9.setObjectName("verticalLayout_9")
+        self.label_7 = QtGui.QLabel(self.centralwidget)
+        self.label_7.setText("")
+        self.label_7.setPixmap(QtGui.QPixmap("res/wrong32.png"))
+        self.label_7.setAlignment(QtCore.Qt.AlignCenter)
+        self.label_7.setObjectName("label_7")
+        self.verticalLayout_9.addWidget(self.label_7)
+        self.wrongButton = QtGui.QPushButton(self.centralwidget)
+        self.wrongButton.setObjectName("wrongButton")
+        self.verticalLayout_9.addWidget(self.wrongButton)
+        self.horizontalLayout_2.addLayout(self.verticalLayout_9)
         self.verticalLayout_4 = QtGui.QVBoxLayout()
         self.verticalLayout_4.setObjectName("verticalLayout_4")
         self.label_4 = QtGui.QLabel(self.centralwidget)
@@ -88,6 +100,9 @@ class Ui_MainWindow(object):
         self.checkBox = QtGui.QCheckBox(self.centralwidget)
         self.checkBox.setObjectName("checkBox")
         self.verticalLayout_3.addWidget(self.checkBox)
+        self.Relearn = QtGui.QPushButton(self.centralwidget)
+        self.Relearn.setObjectName("Relearn")
+        self.verticalLayout_3.addWidget(self.Relearn)
         self.horizontalLayout = QtGui.QHBoxLayout()
         self.horizontalLayout.setObjectName("horizontalLayout")
         self.verticalLayout = QtGui.QVBoxLayout()
@@ -117,10 +132,13 @@ class Ui_MainWindow(object):
         self.status_label = QtGui.QLabel(self.centralwidget)
         self.status_label.setObjectName("status_label")
         self.verticalLayout_8.addWidget(self.status_label)
+        self.network_status = QtGui.QLabel(self.centralwidget)
+        self.network_status.setObjectName("network_status")
+        self.verticalLayout_8.addWidget(self.network_status)
         self.horizontalLayout_5.addLayout(self.verticalLayout_8)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtGui.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 902, 21))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 1062, 25))
         self.menubar.setObjectName("menubar")
         self.menuFile = QtGui.QMenu(self.menubar)
         self.menuFile.setObjectName("menuFile")
@@ -136,9 +154,21 @@ class Ui_MainWindow(object):
         self.actionAbout.setObjectName("actionAbout")
         self.actionAutoplay = QtGui.QAction(MainWindow)
         self.actionAutoplay.setObjectName("actionAutoplay")
+        self.actionLoad_ANN = QtGui.QAction(MainWindow)
+        self.actionLoad_ANN.setObjectName("actionLoad_ANN")
+        self.actionClear_classifier = QtGui.QAction(MainWindow)
+        self.actionClear_classifier.setObjectName("actionClear_classifier")
+        self.actionCreate_classifier = QtGui.QAction(MainWindow)
+        self.actionCreate_classifier.setObjectName("actionCreate_classifier")
+        self.actionTake_a_snapshot = QtGui.QAction(MainWindow)
+        self.actionTake_a_snapshot.setObjectName("actionTake_a_snapshot")
         self.menuFile.addAction(self.actionOpen)
         self.menuFile.addAction(self.actionAutoplay)
+        self.menuFile.addAction(self.actionLoad_ANN)
+        self.menuFile.addAction(self.actionClear_classifier)
+        self.menuFile.addAction(self.actionCreate_classifier)
         self.menuHelp.addAction(self.actionAbout)
+        self.menuHelp.addAction(self.actionTake_a_snapshot)
         self.menubar.addAction(self.menuFile.menuAction())
         self.menubar.addAction(self.menuHelp.menuAction())
 
@@ -148,19 +178,26 @@ class Ui_MainWindow(object):
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(QtGui.QApplication.translate("MainWindow", "CapFinder", None, QtGui.QApplication.UnicodeUTF8))
         self.label.setText(QtGui.QApplication.translate("MainWindow", "TextLabel", None, QtGui.QApplication.UnicodeUTF8))
+        self.wrongButton.setText(QtGui.QApplication.translate("MainWindow", "Wrong", None, QtGui.QApplication.UnicodeUTF8))
         self.goodButton.setText(QtGui.QApplication.translate("MainWindow", "Good", None, QtGui.QApplication.UnicodeUTF8))
         self.badButton.setText(QtGui.QApplication.translate("MainWindow", "Bad", None, QtGui.QApplication.UnicodeUTF8))
         self.groupBox.setTitle(QtGui.QApplication.translate("MainWindow", "Current tool", None, QtGui.QApplication.UnicodeUTF8))
         self.descriptionLable.setText(QtGui.QApplication.translate("MainWindow", "No Selected Tool", None, QtGui.QApplication.UnicodeUTF8))
         self.checkBox.setText(QtGui.QApplication.translate("MainWindow", "Bind to scroll", None, QtGui.QApplication.UnicodeUTF8))
+        self.Relearn.setText(QtGui.QApplication.translate("MainWindow", "Relearn", None, QtGui.QApplication.UnicodeUTF8))
         self.backButton.setText(QtGui.QApplication.translate("MainWindow", "Back", None, QtGui.QApplication.UnicodeUTF8))
         self.label_2.setText(QtGui.QApplication.translate("MainWindow", "(Right Arrow)", None, QtGui.QApplication.UnicodeUTF8))
         self.nextButton.setText(QtGui.QApplication.translate("MainWindow", "Next", None, QtGui.QApplication.UnicodeUTF8))
         self.label_3.setText(QtGui.QApplication.translate("MainWindow", "(Left Arrow)", None, QtGui.QApplication.UnicodeUTF8))
         self.status_label.setText(QtGui.QApplication.translate("MainWindow", "TextLabel", None, QtGui.QApplication.UnicodeUTF8))
+        self.network_status.setText(QtGui.QApplication.translate("MainWindow", "TextLabel", None, QtGui.QApplication.UnicodeUTF8))
         self.menuFile.setTitle(QtGui.QApplication.translate("MainWindow", "File", None, QtGui.QApplication.UnicodeUTF8))
         self.menuHelp.setTitle(QtGui.QApplication.translate("MainWindow", "Help", None, QtGui.QApplication.UnicodeUTF8))
         self.actionOpen.setText(QtGui.QApplication.translate("MainWindow", "Open", None, QtGui.QApplication.UnicodeUTF8))
         self.actionAbout.setText(QtGui.QApplication.translate("MainWindow", "About", None, QtGui.QApplication.UnicodeUTF8))
         self.actionAutoplay.setText(QtGui.QApplication.translate("MainWindow", "Autoplay", None, QtGui.QApplication.UnicodeUTF8))
+        self.actionLoad_ANN.setText(QtGui.QApplication.translate("MainWindow", "Load ANN", None, QtGui.QApplication.UnicodeUTF8))
+        self.actionClear_classifier.setText(QtGui.QApplication.translate("MainWindow", "Clear classifier", None, QtGui.QApplication.UnicodeUTF8))
+        self.actionCreate_classifier.setText(QtGui.QApplication.translate("MainWindow", "Create classifier", None, QtGui.QApplication.UnicodeUTF8))
+        self.actionTake_a_snapshot.setText(QtGui.QApplication.translate("MainWindow", "Take a snapshot", None, QtGui.QApplication.UnicodeUTF8))
 

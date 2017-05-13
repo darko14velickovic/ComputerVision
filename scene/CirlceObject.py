@@ -1,11 +1,12 @@
 from PySide import QtCore, QtGui
-
-import copy
+import math
 
 class CircleObject:
 
     def __init__(self, mode):
         self.center_radius = 5
+
+        self.circle_radius = 0
         self.center_circle = None
         self.mode = mode
         self.circle = None
@@ -22,6 +23,18 @@ class CircleObject:
             self.brush = QtGui.QBrush(self.active_color)
 
         self.pen.setWidth(1)
+
+    def change_mode(self, new_mode):
+
+        if new_mode == "Good":
+            self.active_color = QtGui.QColor(139, 195, 74, self.alpha)
+            self.brush = QtGui.QBrush(self.active_color)
+        elif new_mode == "Bad":
+            self.active_color = QtGui.QColor(244, 67, 54, self.alpha)
+            self.brush = QtGui.QBrush(self.active_color)
+        elif new_mode == "Wrong":
+            self.active_color = QtGui.QColor(54, 67, 244, self.alpha)
+            self.brush = QtGui.QBrush(self.active_color)
 
     def left_click(self, position, scene):
         if not self.is_start:
@@ -46,6 +59,11 @@ class CircleObject:
         else:
             self.is_start = False
             scene.removeItem(self.center_circle)
+            x = position.scenePos().x()
+            y = position.scenePos().y()
+
+            self.circle_radius = math.sqrt(pow(self.x - x, 2) + pow(self.y - y, 2))
+            print "Radius is : "+ str(self.circle_radius)
             return self
 
     def right_click(self, position, scene, items):
@@ -66,6 +84,16 @@ class CircleObject:
                             scene.removeItem(o)
                             scene.update()
                             break
+
+    def draw(self, scene):
+        self.is_start = False
+
+        self.circle = QtGui.QGraphicsEllipseItem(self.x - self.circle_radius / 2, self.y - self.circle_radius / 2, self.circle_radius, self.circle_radius)
+        self.circle.setBrush(self.brush)
+        self.circle.setPen(self.pen)
+
+        scene.addItem(self.circle)
+        scene.update()
 
     def graphics_view_mouse_drag(self, drag, scene):
         if self.is_start:
