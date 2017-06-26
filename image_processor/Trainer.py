@@ -43,7 +43,7 @@ class CnnTrainer:
         # network = max_pool_2d(network, 2)
         network = fully_connected(network, 512, activation='relu')
         network = dropout(network, 0.5)
-        network = fully_connected(network, 3, activation='softmax')
+        network = fully_connected(network, 4, activation='softmax')
         network = regression(network, optimizer='adam',
                              loss='categorical_crossentropy',
                              learning_rate=0.001)
@@ -96,7 +96,7 @@ class CnnTrainer:
                       os.path.join(dir, str(counter) + ext))
             counter += 1
 
-    def loadBottlePics(self):
+    def loadImages(self, folders, example_count, test_count):
         #
         """
         Loads from folders test data and training data and returns images
@@ -115,17 +115,17 @@ class CnnTrainer:
         testing_labels = []
 
         # add loading from the folders
-        folders = ['s1', 's2', 's3']
+        #folders = ['s1', 's2', 's3']
         label_counter = 0
 
         for folder in folders:
-            for i in range(1, 51):
+            for i in range(1, example_count[label_counter] + 1):
                 image = cv2.imread('training data/' + folder + '/' + str(i) + '.png', 1)
                 new = np.divide(image, 1000.)
                 training_images.append(new)
                 training_labels.append(label_counter)
 
-            for i in range(1, 6):
+            for i in range(1, test_count + 1):
                 image = cv2.imread('test data/' + folder + '/' + str(i) + '.png', 1)
                 new = np.divide(image, 1000.)
                 testing_images.append(new)
@@ -155,19 +155,17 @@ class CnnTrainer:
             self.rename(r'test data/s2/', r'*.png')
             self.rename(r'test data/s3/', r'*.png')
 
-    def tf_learn(self, modelName):
+    def tf_learn(self, modelName, folders, example_count, test_count):
         if(self.modelTrained):
             print("Model already trained!")
             return
 
         # (X, Y), (X_test, Y_test) = cifar10.load_data()
-        (X, Y), (X_test, Y_test) = self.loadBottlePics()
+        (X, Y), (X_test, Y_test) = self.loadImages(folders, example_count, test_count)
 
         X, Y = shuffle(X, Y)
-        Y = to_categorical(Y, 3)
-        Y_test = to_categorical(Y_test, 3)
-
-
+        Y = to_categorical(Y, len(folders))
+        Y_test = to_categorical(Y_test, len(folders))
 
         self.model.fit(X, Y, n_epoch=50, shuffle=True, validation_set=(X_test, Y_test),
                   show_metric=True, batch_size=96, run_id=modelName)
@@ -181,7 +179,7 @@ class CnnTrainer:
 
         map = {0: "Bottle without cap", 1: "Random thing", 2: "Bottle with cap"}
 
-        (X, Y), (X_test, Y_test) = self.loadBottlePics()
+        (X, Y), (X_test, Y_test) = self.loadImages()
         # Real-time data preprocessing
         img_prep = ImagePreprocessing()
         img_prep.add_featurewise_zero_center()

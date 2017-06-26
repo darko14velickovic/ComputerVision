@@ -12,6 +12,7 @@ import sys
 
 import cv2
 import numpy as np
+import time
 from PySide import QtCore, QtGui
 from PySide.QtCore import QObject
 from PySide.QtCore import Signal
@@ -29,6 +30,7 @@ from scene.NullObject import NullObject
 import fnmatch
 import os
 import threading
+import glob, os
 
 class LongPythonThread(QObject):
 
@@ -49,6 +51,8 @@ class MainWindow(QtGui.QMainWindow, ui.Ui_MainWindow):
         self.long_thread.thread_finished.connect(self.training_finished)
 
         self.fov_size = 32
+        self.scan_poly = None
+        self.image_or_video_filename = ""
 
         self.polySnipet = None
         self.setupUi(self)
@@ -62,7 +66,10 @@ class MainWindow(QtGui.QMainWindow, ui.Ui_MainWindow):
         self.drawing_pen = QtGui.QPen("White")
         self.drawing_pen.setWidth(2)
 
+
         # self.keyPressEvent = self.key_press_handler
+
+        self.scaningRect = None
 
         # flag for autoplay
         self.autoplaying = False
@@ -95,6 +102,14 @@ class MainWindow(QtGui.QMainWindow, ui.Ui_MainWindow):
         # timer for autoplay
         self.timer = QtCore.QTimer()
         self.timer.timeout.connect(self.next_frame)
+
+        start_point_X_coord = 3 * (600 - 200) / 4
+        start_point_Y_coord = 2 * (480 - 200) / 3
+
+        # self.scaningRect = QGraphicsRectItem(start_point_X_coord, start_point_Y_coord, 200, 200)
+        # self.scaningRect.setPen(self.drawing_pen)
+
+        # self.graphics_scene.addItem(self.scaningRect)
 
 
     def training_finished(self):
@@ -144,7 +159,20 @@ class MainWindow(QtGui.QMainWindow, ui.Ui_MainWindow):
 
         self.actionAutoplay.triggered.connect(self.autoplay)
 
+        self.actionLoad_ANN.setText("Reload image")
+
         self.actionLoad_ANN.triggered.connect(self.load_cnn)
+
+        sequence = QKeySequence("Ctrl+R")
+
+        # shortcut = QShortcut(sequence, self)
+
+        self.actionLoad_ANN.setShortcut(sequence)
+
+        self.actionClear_classifier.setText("Camera")
+
+        sequence = QKeySequence("Shift+C")
+        self.actionClear_classifier.setShortcut(sequence)
 
         self.actionClear_classifier.triggered.connect(self.clear_classifier)
 
@@ -152,14 +180,19 @@ class MainWindow(QtGui.QMainWindow, ui.Ui_MainWindow):
 
         self.actionCreate_classifier.triggered.connect(self.open_network_settings)
 
-    def load_cnn(self):
-        if self.cnn_filter is None:
-            self.descriptionLable.setText("You need to create classifier first!")
-            return
-        self.cnn_filter.load_cnn(self.file_name)
+    def closeEvent(self, e):
+        if self.view_capture is not None and self.view_capture.isOpened():
+            self.view_capture.release()
 
-        # self.descriptionLable.setText(
-        #     "Couldnt load model, check model folder for file name that you created for model!")
+    def load_cnn(self):
+        if self.image_or_video_filename != "":
+            self.view_capture = cv2.VideoCapture(self.image_or_video_filename)
+            if not self.view_capture.isOpened():
+                return
+            self.label.setText("Selected file: " + self.image_or_video_filename)
+            flag, self.currentFrame = self.view_capture.read()
+            if flag:
+                self.show_frame_general(self.currentFrame)
 
     def about(self):
 
@@ -188,20 +221,170 @@ class MainWindow(QtGui.QMainWindow, ui.Ui_MainWindow):
     def FOV_resize(self, change):
         self.fov_size = change
 
+    def evaluate(self):
+        if self.cnn_filter is not None:
+            self.cnn_filter.evaluate_img()
 
     def cnn_relearn(self):
+        if self.cnn_filter is None:
+            return
+        others = (r'/home/darko/Documents/ComputerVision/test data/other/', r'*.png')
+        points = (r'/home/darko/Documents/ComputerVision/test data/point/', r'*.png')
+        palms = (r'/home/darko/Documents/ComputerVision/test data/palm', r'*.png')
+        fists = (r'/home/darko/Documents/ComputerVision/test data/fist', r'*.png')
 
-        if self.cnn_filter is not None:
-            self.status_label.setText("CNN trainer started relearning based on training data.")
-            self.descriptionLable.setText("Training in progress...")
-            # QThread and work on it.
-            # t = threading.Thread(target=self.long_thread.train_network, args=(self.cnn_filter, self.file_name))
-            # t.daemon = True
-            # t.start()
+        correct = 0
+        incorrect = 0
 
-            self.cnn_filter.tf_learn(self.file_name)
-        else:
-            self.status_label.setText("Trainer not set or not trained!")
+        point_image = np.empty((60 * 10, 60 * 10, 3), dtype=np.uint8)
+        currentRow = 0
+        currentColomn = 0
+
+        confused = []
+        logic_names_dict = {0: "fist", 1: "palm", 2: "point", 3: "other"}
+
+        for pathAndFilename in glob.iglob(os.path.join(points[0], points[1])):
+            image = cv2.imread(pathAndFilename)
+
+
+
+            prediction = self.cnn_filter.evaluate_img(image)
+            maxIndex = np.argmax(prediction)
+            if maxIndex != 2:
+                incorrect += 1
+                confused.append(maxIndex)
+
+            else:
+                correct += 1
+                point_image[currentColomn:currentColomn + 60, currentRow:currentRow + 60, :] = image
+
+            currentColomn += 60
+
+            if currentColomn >= 600:
+                currentColomn = 0
+                currentRow += 60
+
+        cv2.imwrite("PointImage.png", point_image)
+        counts = np.bincount(confused)
+        index = -1
+        if counts.__len__() != 0:
+            index = np.argmax(counts)
+
+        print("For point images results are: Correct: " + str(correct) + "; Incorrect: " + str(incorrect) + "|Most incorrect with class: " + logic_names_dict.get(index, "none"))
+
+        correct = 0
+        incorrect = 0
+        confused = []
+
+
+        palms_image = np.empty((60 * 10, 60 * 10, 3), dtype=np.uint8)
+        currentRow = 0
+        currentColomn = 0
+
+        for pathAndFilename in glob.iglob(os.path.join(palms[0], palms[1])):
+            image = cv2.imread(pathAndFilename)
+
+
+
+            prediction = self.cnn_filter.evaluate_img(image)
+            maxIndex = np.argmax(prediction)
+            if maxIndex != 1:
+                incorrect += 1
+
+                confused.append(maxIndex)
+            else:
+                correct += 1
+                palms_image[currentColomn:currentColomn + 60, currentRow:currentRow + 60, :] = image
+
+            currentColomn += 60
+            if currentColomn >= 600:
+                currentColomn = 0
+                currentRow += 60
+        cv2.imwrite("PalmsImage.png", palms_image)
+
+        counts = np.bincount(confused)
+        index = -1
+        if counts.__len__() != 0:
+            index = np.argmax(counts)
+        print("For palms images results are: Correct: " + str(correct) + "; Incorrect: " + str(incorrect) + "|Most incorrect with class: " + logic_names_dict.get(index, "none"))
+
+        correct = 0
+        incorrect = 0
+
+        fists_image = np.empty((60 * 10, 60 * 10, 3), dtype=np.uint8)
+        currentRow = 0
+        currentColomn = 0
+        confused = []
+
+        for pathAndFilename in glob.iglob(os.path.join(fists[0], fists[1])):
+            image = cv2.imread(pathAndFilename)
+            prediction = self.cnn_filter.evaluate_img(image)
+            maxIndex = np.argmax(prediction)
+            if maxIndex != 0:
+                incorrect += 1
+
+                confused.append(maxIndex)
+            else:
+                correct += 1
+                fists_image[currentColomn:currentColomn + 60, currentRow:currentRow + 60, :] = image
+
+
+            currentColomn += 60
+            if currentColomn >= 600:
+                currentColomn = 0
+                currentRow += 60
+        cv2.imwrite("FistsImage.png", fists_image)
+
+        counts = np.bincount(confused)
+        index = -1
+        if counts.__len__() != 0:
+            index = np.argmax(counts)
+        print("For fists images results are: Correct: " + str(correct) + "; Incorrect: " + str(incorrect) + "|Most incorrect with class: " + logic_names_dict.get(index, "none"))
+
+        correct = 0
+        incorrect = 0
+
+        others_image = np.empty((60 * 10, 60 * 10, 3), dtype=np.uint8)
+        currentRow = 0
+        currentColomn = 0
+        confused = []
+
+        for pathAndFilename in glob.iglob(os.path.join(others[0], others[1])):
+            image = cv2.imread(pathAndFilename)
+            prediction = self.cnn_filter.evaluate_img(image)
+            maxIndex = np.argmax(prediction)
+            if maxIndex != 3:
+                incorrect += 1
+
+                confused.append(maxIndex)
+            else:
+                correct += 1
+                others_image[currentColomn:currentColomn + 60, currentRow:currentRow + 60, :] = image
+
+
+            currentColomn += 60
+            if currentColomn >= 600:
+                currentColomn = 0
+                currentRow += 60
+        cv2.imwrite("OthersImages.png", others_image)
+
+        counts = np.bincount(confused)
+        index = -1
+        if counts.__len__() != 0:
+            index = np.argmax(counts)
+        print("For other images results are: Correct: " + str(correct) + "; Incorrect: " + str(incorrect) + "|Most incorrect with class: " + logic_names_dict.get(index, "none"))
+
+        # if self.cnn_filter is not None:
+        #     self.status_label.setText("CNN trainer started relearning based on training data.")
+        #     self.descriptionLable.setText("Training in progress...")
+        #     # QThread and work on it.
+        #     # t = threading.Thread(target=self.long_thread.train_network, args=(self.cnn_filter, self.file_name))
+        #     # t.daemon = True
+        #     # t.start()
+        #
+        #     self.cnn_filter.tf_learn(self.file_name)
+        # else:
+        #     self.status_label.setText("Trainer not set or not trained!")
 
     def open_network_settings(self):
         if self.networkSettings is None:
@@ -300,24 +483,55 @@ class MainWindow(QtGui.QMainWindow, ui.Ui_MainWindow):
 
     def right_click(self, position):
 
-        if self.element is None:
-            self.descriptionLable.setText("Right click in wrong state")
-            return
+        if self.cnn_filter is not None and self.cnn_filter.modelTrained:
+            pos = position.scenePos()
+            xCord = int(pos.x())
+            yCord = int(pos.y())
+            pixMap = self.pix_item.pixmap()
+            qimg = pixMap.toImage()
+            matrix = self.QImageToCvMat(qimg)
 
-        self.element.right_click(position, self.graphics_scene, self.items)
-        for object in self.trainingData:
+            halfFov = self.fov_size / 2
+            part = matrix[yCord - halfFov: yCord + halfFov, xCord - halfFov: xCord + halfFov]
+            part = part[:, :, :3]
 
-            clickX = position.scenePos().x()
-            clickY = position.scenePos().y()
+            prediction = self.cnn_filter.evaluate_img(part)
+            max_index = np.argmax(prediction)
 
-            x = object.x
-            y = object.y
-            r = object.circle_radius
+            self.scan_poly = QtGui.QGraphicsRectItem(xCord - halfFov, yCord - halfFov, self.fov_size, self.fov_size)
 
-            dist = math.sqrt(pow(x - clickX, 2) + pow(y - clickY, 2))
-            if dist <= r:
-                self.trainingData.remove(object)
-                self.status_label.setText("Removed circle from training data!")
+            pen = None
+            if max_index == 3:
+                pen = QtGui.QPen("Gray")
+            if max_index == 0:
+                pen = QtGui.QPen("Blue")
+            elif max_index == 1:
+                pen = QtGui.QPen("Green")
+            elif max_index == 2:
+                pen = QtGui.QPen("Red")
+
+            self.scan_poly.setPen(pen)
+            self.graphics_scene.addItem(self.scan_poly)
+            self.graphics_scene.update()
+
+        # if self.element is None:
+        #     self.descriptionLable.setText("Right click in wrong state")
+        #     return
+        #
+        # self.element.right_click(position, self.graphics_scene, self.items)
+        # for object in self.trainingData:
+        #
+        #     clickX = position.scenePos().x()
+        #     clickY = position.scenePos().y()
+        #
+        #     x = object.x
+        #     y = object.y
+        #     r = object.circle_radius
+        #
+        #     dist = math.sqrt(pow(x - clickX, 2) + pow(y - clickY, 2))
+        #     if dist <= r:
+        #         self.trainingData.remove(object)
+        #         self.status_label.setText("Removed circle from training data!")
 
     def wrong_button_action(self):
 
@@ -344,16 +558,16 @@ class MainWindow(QtGui.QMainWindow, ui.Ui_MainWindow):
         # self.descriptionLable.setText("Bad tool is used for marking\nnegative part of image.")
 
     def open(self):
-        file_name, _ = QtGui.QFileDialog.getOpenFileName(self, "Open File", QtCore.QDir.currentPath())
-        if file_name:
+        self.image_or_video_filename, _ = QtGui.QFileDialog.getOpenFileName(self, "Open File", QtCore.QDir.currentPath())
+        if self.image_or_video_filename:
             # self.init_learning()
-            self.view_capture = cv2.VideoCapture(file_name)
+            self.view_capture = cv2.VideoCapture(self.image_or_video_filename)
             if not self.view_capture.isOpened():
                 return
-            self.label.setText("Selected file: " + file_name)
+            self.label.setText("Selected file: " + self.image_or_video_filename)
             flag, self.currentFrame = self.view_capture.read()
             if flag:
-                self.show_frame(self.currentFrame)
+                self.show_frame_general(self.currentFrame)
 
     def load_pickle_file(self):
         file_name, _ = QtGui.QFileDialog.getOpenFileName(self, "Open File", QtCore.QDir.currentPath())
@@ -364,6 +578,101 @@ class MainWindow(QtGui.QMainWindow, ui.Ui_MainWindow):
             except Exception as ex:
 
                 self.status_label.setText("Error ocurred. Error message: " + str(ex))
+
+    def sliding_window(self, image, stepSize, windowSize):
+        # slide a window across the image
+        for y in xrange(0, image.shape[0], stepSize):
+            for x in xrange(0, image.shape[1], stepSize):
+                # yield the current window
+                yield (x, y, image[y:y + windowSize[1], x:x + windowSize[0]])
+
+
+    def window_stack(self, a, stepsize, width):
+        n = a.shape[0]
+        return np.hstack(a[i:1 + n + i - width:stepsize] for i in range(0, width))
+
+    def show_frame_general(self, frame):
+
+        frame = cv2.cvtColor(frame, cv2.cv.CV_BGR2RGB)
+
+        image = QtGui.QImage(frame, frame.shape[1], frame.shape[0], frame.strides[0], QtGui.QImage.Format_RGB888)
+        self.graphics_scene.removeItem(self.pix_item)
+        self.graphics_scene.update()
+        img = QtGui.QPixmap.fromImage(image)
+        self.pix_item = QtGui.QGraphicsPixmapItem(img)
+
+        # QtGui.QGraphicsRectItem(window[0] - half, window[1] - half, self.fov_size, self.fov_size)
+
+
+
+        self.graphics_scene.addItem(self.pix_item)
+        self.graphics_scene.update()
+
+        window_size = 180
+
+        start_point_X_coord = (frame.shape[1] / 2) - (window_size / 2)
+        start_point_Y_coord = (frame.shape[0] / 2) - (window_size / 2)
+
+
+
+        smaller_window = frame[start_point_X_coord:start_point_X_coord + window_size, start_point_Y_coord: start_point_Y_coord + window_size, :]
+        cv2.imshow("FOV", smaller_window)
+        vsplit = np.split(smaller_window, [60, 120])
+
+        sliding_windows = []
+
+        for split in vsplit:
+            more = np.split(split, [60, 120], 1)
+            sliding_windows.append(more)
+
+
+        # half = self.fov_size / 2
+
+        for window in sliding_windows:
+            if self.cnn_filter is not None and self.cnn_filter.modelTrained:
+                if window[2].shape[0] != self.fov_size or window[2].shape[1] != self.fov_size:
+                    continue
+                roi = np.divide(window[2], 1000.)
+                # print "Obradjen prozor"
+                prediction = self.cnn_filter.evaluate_img(roi)
+                max_index = np.argmax(prediction[0])
+                if prediction[0][max_index] > 0.85:
+                    # self.scan_poly = QtGui.QGraphicsRectItem(window[0] - half, window[1] - half, self.fov_size, self.fov_size)
+
+
+                    pen = None
+                    if max_index == 3:
+                        continue
+                    if max_index == 0:
+                        pen = QtGui.QPen("Blue")
+                        self.status_label.setText("FIST!")
+                    elif max_index == 1:
+                        pen = QtGui.QPen("Green")
+                        self.status_label.setText("PALM!")
+                    elif max_index == 2:
+                        pen = QtGui.QPen("Red")
+                        self.status_label.setText("POINT!")
+                    # self.scan_poly.setPen(pen)
+                    # self.graphics_scene.addItem(self.scan_poly)
+                    # self.graphics_scene.update()
+
+                # print(prediction)
+                # print(max_index)
+
+            # if self.scan_poly is not None:
+            #     self.graphics_scene.removeItem(self.scan_poly)
+            #     self.graphics_scene.update()
+            # self.scan_poly = QtGui.QGraphicsRectItem(window[0] - half, window[1] - half, self.fov_size, self.fov_size)
+
+            # self.graphics_scene.addItem(self.scan_poly)
+            # self.graphics_scene.update()
+            # time.sleep(0.005)
+
+            # print (window)
+
+
+
+
 
     def show_frame(self, frame):
 
@@ -437,7 +746,7 @@ class MainWindow(QtGui.QMainWindow, ui.Ui_MainWindow):
             if go_next:
                 flag, self.currentFrame = self.view_capture.read()
                 if flag:
-                    self.show_frame(self.currentFrame)
+                    self.show_frame_general(self.currentFrame)
                 else:
                     self.view_capture.release()
 
@@ -511,8 +820,11 @@ class MainWindow(QtGui.QMainWindow, ui.Ui_MainWindow):
         print("back")
 
     def clear_classifier(self):
-        self.classifier = None
-        self.status_label.setText("Classifier cleared.")
+        self.status_label.setText("Starting camera...")
+        self.view_capture = cv2.VideoCapture(0)
+        customFont = QtGui.QFont("Times", 72, QtGui.QFont.Bold)
+
+        self.status_label.setFont(customFont)
 
     def check_box_click(self, event):
         if event == 2:
@@ -528,7 +840,7 @@ class MainWindow(QtGui.QMainWindow, ui.Ui_MainWindow):
             self.timer.stop()
             self.actionAutoplay.setText("Autoplay")
         else:
-            self.timer.start(100)
+            self.timer.start(10)
             self.actionAutoplay.setText("Stop autoplay")
         self.autoplaying = not self.autoplaying
 
